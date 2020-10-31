@@ -13,7 +13,7 @@ departments=[('Cardiologist','Cardiologist'),
 
 types = [('Xray','Xray')]
 class Doctor(models.Model):
-    user=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    user=models.OneToOneField(User,on_delete=models.CASCADE)
     profile_pic= models.ImageField(upload_to='profile_pic/DoctorProfilePic/',null=True,blank=True)
     address = models.CharField(max_length=40)
     mobile = models.CharField(max_length=20,null=True)
@@ -31,7 +31,7 @@ class Doctor(models.Model):
 
 
 class Patient(models.Model):
-    user=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    user=models.OneToOneField(User,on_delete=models.CASCADE)
     profile_pic= models.ImageField(upload_to='profile_pic/PatientProfilePic/',null=True,blank=True)
     address = models.CharField(max_length=40)
     mobile = models.CharField(max_length=20,null=False)
@@ -135,22 +135,31 @@ class Description(models.Model):
     # pid = models.ForeignKey(Patient, on_delete = models.CASCADE )
     # did = models.ForeignKey(Doctor, on_delete = models.CASCADE ) 
 
-from django.db import models
-from django.contrib.auth.models import AbstractUser
+# from django.db import models
+# from django.contrib.auth.models import AbstractUser
 
-class User(AbstractUser):      
-    Fname = models.CharField(max_length=30, blank=True)
-    Lname = models.CharField(max_length=30, blank=True) 
-    Mname = models.CharField(max_length=30, blank=True)
+# class User(AbstractUser):      
+#     Fname = models.CharField(max_length=30, blank=True)
+#     Lname = models.CharField(max_length=30, blank=True) 
+#     Mname = models.CharField(max_length=30, blank=True)
+#     sex = models.CharField(max_length=1, blank=True)
+#     age = models.IntegerField()
+#     Bname = models.CharField(max_length=30, blank=True) 
+#     Sname = models.CharField(max_length=30, blank=True) 
+#     city = models.CharField(max_length=30, blank=True) 
+#     pincode= models.IntegerField()
+
+class Profile(models.Model):
     sex = models.CharField(max_length=1, blank=True)
     age = models.IntegerField()
     Bname = models.CharField(max_length=30, blank=True) 
     Sname = models.CharField(max_length=30, blank=True) 
     city = models.CharField(max_length=30, blank=True) 
     pincode= models.IntegerField()
-
+    user=models.OneToOneField(User,on_delete=models.CASCADE)
+    
 class PhoneNumber(models.Model):
-    user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE) 
+    user=models.ForeignKey(User,on_delete=models.CASCADE) 
     phone = models.IntegerField()
 
 class PrescribedIn(models.Model):

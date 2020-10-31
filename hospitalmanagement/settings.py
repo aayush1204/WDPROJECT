@@ -146,4 +146,4 @@ EMAIL_HOST_PASSWORD = 'xyz' # host email password required
 EMAIL_RECEIVING_USER = ['to@gmail.com'] # email on which you will receive messages sent from website
 
 
-AUTH_USER_MODEL = 'hospital.User'
+# AUTH_USER_MODEL = 'hospital.User'
