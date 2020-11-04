@@ -83,31 +83,34 @@ def doctor_signup_view(request):
 
 def patient_signup_view(request):
     userForm=forms.PatientUserForm()
-    patientForm=forms.PatientForm()
+    #patientForm=forms.PatientForm()
     profileForm = forms.ProfileForm()
-    mydict={'userForm':userForm,'patientForm':patientForm, 'profileForm':profileForm}
+    mydict={'userForm':userForm,'profileForm':profileForm}
     if request.method=='POST':
         userForm=forms.PatientUserForm(request.POST)
         profileForm=forms.ProfileForm(request.POST)
-        patientForm=forms.PatientForm(request.POST,request.FILES)
-        if userForm.is_valid() and patientForm.is_valid():
+        #patientForm=forms.PatientForm(request.POST,request.FILES)
+        if userForm.is_valid() and profileForm.is_valid():
             user=userForm.save()
             user.set_password(user.password)
             user.save()
+            Patient.objects.create(user = user, patientId=user.id, patientStatus='Active', patientOverduePay=0)
 
-            patient=patientForm.save(commit=False)
-            patient.user=user
-            patient.assignedDoctorId=request.POST.get('assignedDoctorId')
-            patient=patient.save()
+            #patient=patientForm.save(commit=False)
+            #patient.user=user
+            #patient.assignedDoctorId=request.POST.get('assignedDoctorId')
+            #patient=patient.save()
 
             profile = profileForm.save(commit=False)
             profile.user = user
+
             profile = profile.save()
 
             my_patient_group = Group.objects.get_or_create(name='PATIENT')
             my_patient_group[0].user_set.add(user)
         return HttpResponseRedirect('patientlogin')
     return render(request,'hospital/patientsignup.html',context=mydict)
+
 
 
 
