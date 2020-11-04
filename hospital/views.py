@@ -1,5 +1,6 @@
 from django.shortcuts import render,redirect,reverse
 from . import forms,models
+from .models import Doctor,Patient,Receptionist
 from django.db.models import Sum
 from django.contrib.auth.models import Group
 from django.http import HttpResponseRedirect
@@ -46,6 +47,9 @@ def admin_signup_view(request):
             user=form.save()
             user.set_password(user.password)
             user.save()
+
+            Receptionist.objects.create(user = user, receptionistid=user.id, clinicname=form.clinicname, jobstatus=form.jobstatus)
+
             my_admin_group = Group.objects.get_or_create(name='ADMIN')
             my_admin_group[0].user_set.add(user)
             return HttpResponseRedirect('adminlogin')
@@ -74,6 +78,8 @@ def doctor_signup_view(request):
             profile = profileForm.save(commit=False)
             profile.user = user
             profile = profile.save()
+
+            Doctor.objects.create(user = user, doctorId=user.id, clinicname=form.clinicname, specialization=form.specialization)
 
             my_doctor_group = Group.objects.get_or_create(name='DOCTOR')
             my_doctor_group[0].user_set.add(user)
@@ -131,13 +137,13 @@ def afterlogin_view(request):
     if is_admin(request.user):
         return redirect('admin-dashboard')
     elif is_doctor(request.user):
-        accountapproval=models.Doctor.objects.all().filter(user_id=request.user.id,status=True)
+        accountapproval=models.Doctor.objects.all().filter(doctorId=request.user.id,)
         if accountapproval:
             return redirect('doctor-dashboard')
         else:
             return render(request,'hospital/doctor_wait_for_approval.html')
     elif is_patient(request.user):
-        accountapproval=models.Patient.objects.all().filter(user_id=request.user.id,status=True)
+        accountapproval=models.Patient.objects.all().filter(patientId=request.user.id,)
         if accountapproval:
             return redirect('patient-dashboard')
         else:

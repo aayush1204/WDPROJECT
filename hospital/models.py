@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
-
+from datetime import datetime
 
 departments=[('Cardiologist','Cardiologist'),
 ('Dermatologists','Dermatologists'),
@@ -49,6 +49,7 @@ class Patient(models.Model):
         return self.user.id
 
 class Receptionist(models.Model):
+    user=models.OneToOneField(User,on_delete=models.CASCADE)
     receptionistid = models.IntegerField()
     clinicname = models.CharField(max_length = 20)
     jobstatus = models.CharField(max_length = 1)
@@ -59,8 +60,8 @@ class Appointment(models.Model):
     patientId=models.ForeignKey(Patient, on_delete=models.CASCADE )
     doctorId=models.ForeignKey(Doctor, on_delete=models.CASCADE )
     receptionistid = models.ForeignKey(Receptionist, on_delete=models.CASCADE )
-    date = models.DateTimeField()
-    timing=models.DateTimeField()
+    date = models.DateTimeField(default=datetime.now)
+    timing=models.DateTimeField(default=datetime.now)
     isCancelled=models.BooleanField(default=False)
     #appointmentDate=models.DateField(auto_now=True)
     #description=models.TextField(max_length=500)
