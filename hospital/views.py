@@ -1,5 +1,6 @@
 from django.shortcuts import render,redirect,reverse
 from . import forms,models
+from .models import Doctor,Patient,Receptionist
 from django.db.models import Sum
 from django.contrib.auth.models import Group
 from django.http import HttpResponseRedirect
@@ -46,6 +47,9 @@ def admin_signup_view(request):
             user=form.save()
             user.set_password(user.password)
             user.save()
+
+            Receptionist.objects.create(user = user, receptionistid=user.id, clinicname=form.clinicname, jobstatus=form.jobstatus)
+
             my_admin_group = Group.objects.get_or_create(name='ADMIN')
             my_admin_group[0].user_set.add(user)
             return HttpResponseRedirect('adminlogin')
@@ -66,7 +70,7 @@ def doctor_signup_view(request):
         if userForm.is_valid() and doctorForm.is_valid():
             user=userForm.save()
             user.set_password(user.password)
-            user.save()
+
             doctor=doctorForm.save(commit=False)
             doctor.user=user
             doctor=doctor.save()
@@ -75,39 +79,46 @@ def doctor_signup_view(request):
             profile.user = user
             profile = profile.save()
 
+            Doctor.objects.create(user = user, doctorId=user.id, clinicname=form.clinicname, specialization=form.specialization)
+
             my_doctor_group = Group.objects.get_or_create(name='DOCTOR')
             my_doctor_group[0].user_set.add(user)
+            user.save()
         return HttpResponseRedirect('doctorlogin')
     return render(request,'hospital/doctorsignup.html',context=mydict)
 
 
 def patient_signup_view(request):
     userForm=forms.PatientUserForm()
-    patientForm=forms.PatientForm()
+    #patientForm=forms.PatientForm()
     profileForm = forms.ProfileForm()
-    mydict={'userForm':userForm,'patientForm':patientForm, 'profileForm':profileForm}
+    mydict={'userForm':userForm,'profileForm':profileForm}
     if request.method=='POST':
         userForm=forms.PatientUserForm(request.POST)
         profileForm=forms.ProfileForm(request.POST)
-        patientForm=forms.PatientForm(request.POST,request.FILES)
-        if userForm.is_valid() and patientForm.is_valid():
+        #patientForm=forms.PatientForm(request.POST,request.FILES)
+        if userForm.is_valid() and profileForm.is_valid():
             user=userForm.save()
             user.set_password(user.password)
-            user.save()
 
-            patient=patientForm.save(commit=False)
-            patient.user=user
-            patient.assignedDoctorId=request.POST.get('assignedDoctorId')
-            patient=patient.save()
+            Patient.objects.create(user = user, patientId=user.id, patientStatus=False, patientOverduePay=0)
+
+            #patient=patientForm.save(commit=False)
+            #patient.user=user
+            #patient.assignedDoctorId=request.POST.get('assignedDoctorId')
+            #patient=patient.save()
 
             profile = profileForm.save(commit=False)
             profile.user = user
+
             profile = profile.save()
 
             my_patient_group = Group.objects.get_or_create(name='PATIENT')
             my_patient_group[0].user_set.add(user)
+            user.save()
         return HttpResponseRedirect('patientlogin')
     return render(request,'hospital/patientsignup.html',context=mydict)
+
 
 
 
@@ -118,6 +129,7 @@ def patient_signup_view(request):
 def is_admin(user):
     return user.groups.filter(name='ADMIN').exists()
 def is_doctor(user):
+    print(user.groups.filter(name='DOCTOR').exists())
     return user.groups.filter(name='DOCTOR').exists()
 def is_patient(user):
     return user.groups.filter(name='PATIENT').exists()
@@ -128,13 +140,14 @@ def afterlogin_view(request):
     if is_admin(request.user):
         return redirect('admin-dashboard')
     elif is_doctor(request.user):
-        accountapproval=models.Doctor.objects.all().filter(user_id=request.user.id,status=True)
+        print('Reached inside elif')
+        accountapproval=models.Doctor.objects.all().filter(doctorId=request.user.id,)
         if accountapproval:
             return redirect('doctor-dashboard')
         else:
             return render(request,'hospital/doctor_wait_for_approval.html')
     elif is_patient(request.user):
-        accountapproval=models.Patient.objects.all().filter(user_id=request.user.id,status=True)
+        accountapproval=models.Patient.objects.all().filter(patientId=request.user.id,)
         if accountapproval:
             return redirect('patient-dashboard')
         else:
@@ -581,21 +594,21 @@ def reject_appointment_view(request,pk):
 @user_passes_test(is_doctor)
 def doctor_dashboard_view(request):
     #for three cards
-    patientcount=models.Patient.objects.all().filter(status=True,assignedDoctorId=request.user.id).count()
-    appointmentcount=models.Appointment.objects.all().filter(status=True,doctorId=request.user.id).count()
-    patientdischarged=models.PatientDischargeDetails.objects.all().distinct().filter(assignedDoctorName=request.user.first_name).count()
+    # patientcount=models.Patient.objects.all().filter(status=True,assignedDoctorId=request.user.id).count()
+    appointmentcount=models.Appointment.objects.all().filter(isCancelled=False,doctorId=request.user.id).count()
+    # patientdischarged=models.PatientDischargeDetails.objects.all().distinct().filter(assignedDoctorName=request.user.first_name).count()
 
     #for  table in doctor dashboard
-    appointments=models.Appointment.objects.all().filter(status=True,doctorId=request.user.id).order_by('-id')
+    appointments=models.Appointment.objects.all().filter(isCancelled=False,doctorId=request.user.id).order_by('-id')
     patientid=[]
     for a in appointments:
         patientid.append(a.patientId)
-    patients=models.Patient.objects.all().filter(status=True,user_id__in=patientid).order_by('-id')
+    patients=models.Patient.objects.all().filter(patientStatus=True,user_id__in=patientid).order_by('-id')
     appointments=zip(appointments,patients)
     mydict={
-    'patientcount':patientcount,
+    # 'patientcount':patientcount,
     'appointmentcount':appointmentcount,
-    'patientdischarged':patientdischarged,
+    # 'patientdischarged':patientdischarged,
     'appointments':appointments,
     'doctor':models.Doctor.objects.get(user_id=request.user.id), #for profile picture of doctor in sidebar
     }
@@ -643,11 +656,11 @@ def doctor_appointment_view(request):
 @user_passes_test(is_doctor)
 def doctor_view_appointment_view(request):
     doctor=models.Doctor.objects.get(user_id=request.user.id) #for profile picture of doctor in sidebar
-    appointments=models.Appointment.objects.all().filter(status=True,doctorId=request.user.id)
+    appointments=models.Appointment.objects.all().filter(isCancelled=False,doctorId=request.user.id)
     patientid=[]
     for a in appointments:
         patientid.append(a.patientId)
-    patients=models.Patient.objects.all().filter(status=True,user_id__in=patientid)
+    patients=models.Patient.objects.all().filter(patientStatus=True,user_id__in=patientid)
     appointments=zip(appointments,patients)
     return render(request,'hospital/doctor_view_appointment.html',{'appointments':appointments,'doctor':doctor})
 
@@ -699,15 +712,17 @@ def delete_appointment_view(request,pk):
 @user_passes_test(is_patient)
 def patient_dashboard_view(request):
     patient=models.Patient.objects.get(user_id=request.user.id)
-    doctor=models.Doctor.objects.get(user_id=patient.assignedDoctorId)
+    doctor=models.Appointment.objects.filter(patientId = patient.patientId)
+    # Doctor.objects.get(user_id=patient.assignedDoctorId)
     mydict={
     'patient':patient,
-    'doctorName':doctor.get_name,
-    'doctorMobile':doctor.mobile,
-    'doctorAddress':doctor.address,
-    'symptoms':patient.symptoms,
-    'doctorDepartment':doctor.department,
-    'admitDate':patient.admitDate,
+    # 'doctorName':doctor.get_name,
+    # 'doctorMobile':doctor.mobile,
+    # 'doctorAddress':doctor.address,
+    'doctor':'doctor',
+    # 'symptoms':patient.symptoms,
+    # 'doctorDepartment':doctor.department,
+    # 'admitDate':patient.admitDate,
     }
     return render(request,'hospital/patient_dashboard.html',context=mydict)
 
