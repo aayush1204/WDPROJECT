@@ -77,6 +77,15 @@ class ContactusForm(forms.Form):
     Message = forms.CharField(max_length=500,widget=forms.Textarea(attrs={'rows': 3, 'cols': 30}))
 
 
+class UploadRecordForm(forms.ModelForm):
+    class Meta:
+        model = models.Description
+        fields = '__all__'
+        widgets = {
+            'recimage': forms.FileInput(attrs={'class': 'form-control'}),
+
+        }
+        exclude = ['type','title','rid']
 
 #Developed By : sumit kumar
 #facebook : fb.com/sumit.luv

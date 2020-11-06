@@ -115,14 +115,10 @@ def patient_signup_view(request):
 
             my_patient_group = Group.objects.get_or_create(name='PATIENT')
             my_patient_group[0].user_set.add(user)
+
             user.save()
         return HttpResponseRedirect('patientlogin')
     return render(request,'hospital/patientsignup.html',context=mydict)
-
-
-
-
-
 
 
 #-----------for checking user is doctor , patient or admin(by sumit)
@@ -770,37 +766,50 @@ def patient_view_appointment_view(request):
 
 @login_required(login_url='patientlogin')
 @user_passes_test(is_patient)
-def patient_discharge_view(request):
-    patient=models.Patient.objects.get(user_id=request.user.id) #for profile picture of patient in sidebar
-    dischargeDetails=models.PatientDischargeDetails.objects.all().filter(patientId=patient.id).order_by('-id')[:1]
-    patientDict=None
-    if dischargeDetails:
-        patientDict ={
-        'is_discharged':True,
-        'patient':patient,
-        'patientId':patient.id,
-        'patientName':patient.get_name,
-        'assignedDoctorName':dischargeDetails[0].assignedDoctorName,
-        'address':patient.address,
-        'mobile':patient.mobile,
-        'symptoms':patient.symptoms,
-        'admitDate':patient.admitDate,
-        'releaseDate':dischargeDetails[0].releaseDate,
-        'daySpent':dischargeDetails[0].daySpent,
-        'medicineCost':dischargeDetails[0].medicineCost,
-        'roomCharge':dischargeDetails[0].roomCharge,
-        'doctorFee':dischargeDetails[0].doctorFee,
-        'OtherCharge':dischargeDetails[0].OtherCharge,
-        'total':dischargeDetails[0].total,
-        }
-        print(patientDict)
+def patient_records(request):
+    return render(request,'hospital/patient_records.html')
+
+def patient_view_records(request):
+    patient=models.Patient.objects.get(user_id=request.user.id)
+    records=models.Records.objects.filter(pid=patient)
+    descriptionlist = []
+    for i in records:
+        descriptionlist.append(models.Description.objects.get(rid = i))
+    return render(request,'hospital/patient_view_records.html',{'patient':patient,'descriptionlist':descriptionlist})
+
+def patient_upload_records(request):
+    if request.method == 'GET':
+        uploadform = forms.UploadRecordForm()
+        return render(request,'hospital/patient_upload_records.html',{'uploadform':uploadform})
     else:
-        patientDict={
-            'is_discharged':False,
-            'patient':patient,
-            'patientId':request.user.id,
-        }
-    return render(request,'hospital/patient_discharge.html',context=patientDict)
+        return render()
+    # if dischargeDetails:
+    #     patientDict ={
+    #     'is_discharged':True,
+    #     'patient':patient,
+    #     'patientId':patient.id,
+    #     'patientName':patient.get_name,
+    #     'assignedDoctorName':dischargeDetails[0].assignedDoctorName,
+    #     'address':patient.address,
+    #     'mobile':patient.mobile,
+    #     'symptoms':patient.symptoms,
+    #     'admitDate':patient.admitDate,
+    #     'releaseDate':dischargeDetails[0].releaseDate,
+    #     'daySpent':dischargeDetails[0].daySpent,
+    #     'medicineCost':dischargeDetails[0].medicineCost,
+    #     'roomCharge':dischargeDetails[0].roomCharge,
+    #     'doctorFee':dischargeDetails[0].doctorFee,
+    #     'OtherCharge':dischargeDetails[0].OtherCharge,
+    #     'total':dischargeDetails[0].total,
+    #     }
+    #     print(patientDict)
+    # else:
+    #     patientDict={
+    #         'is_discharged':False,
+    #         'patient':patient,
+    #         'patientId':request.user.id,
+    #     }
+    # return render(request,'hospital/patient_discharge.html',context=patientDict)
 
 
 #------------------------ PATIENT RELATED VIEWS END ------------------------------
