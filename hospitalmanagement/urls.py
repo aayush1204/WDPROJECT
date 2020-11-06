@@ -33,7 +33,7 @@ urlpatterns = [
     path('adminsignup', views.admin_signup_view),
     path('doctorsignup', views.doctor_signup_view,name='doctorsignup'),
     path('patientsignup', views.patient_signup_view),
-    
+
     path('adminlogin', LoginView.as_view(template_name='hospital/adminlogin.html')),
     path('doctorlogin', LoginView.as_view(template_name='hospital/doctorlogin.html')),
     path('patientlogin', LoginView.as_view(template_name='hospital/patientlogin.html')),
@@ -68,7 +68,6 @@ urlpatterns = [
     path('discharge-patient/<int:pk>', views.discharge_patient_view,name='discharge-patient'),
     path('download-pdf/<int:pk>', views.download_pdf_view,name='download-pdf'),
 
-
     path('admin-appointment', views.admin_appointment_view,name='admin-appointment'),
     path('admin-view-appointment', views.admin_view_appointment_view,name='admin-view-appointment'),
     path('admin-add-appointment', views.admin_add_appointment_view,name='admin-add-appointment'),
@@ -102,7 +101,11 @@ urlpatterns +=[
     path('patient-appointment', views.patient_appointment_view,name='patient-appointment'),
     path('patient-book-appointment', views.patient_book_appointment_view,name='patient-book-appointment'),
     path('patient-view-appointment', views.patient_view_appointment_view,name='patient-view-appointment'),
-    path('patient-discharge', views.patient_discharge_view,name='patient-discharge'),
+    # path('patient-discharge', views.patient_discharge_view,name='patient-discharge'),
+    path('patient-records', views.patient_records,name='patient-records'),
+    path('patient-view-records', views.patient_view_records,name='patient-view-records'),
+    path('patient-upload-records', views.patient_upload_records,name='patient-upload-records'),
+
 
 ]
 
